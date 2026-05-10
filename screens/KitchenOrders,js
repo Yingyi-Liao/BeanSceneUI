@@ -192,7 +192,7 @@ export default function KitchenOrdersScreen({ isOnline = true, onBack }) {
                         style={styles.completeBtn}
                         onPress={() => handleUpdateToCompleted(item.id)}
                       >
-                        <Text style={styles.completeBtnText}>Mark Served</Text>
+                        <Text style={styles.completeBtnText}>Mark Completed</Text>
                       </TouchableOpacity>
                     )}
                   </View>
