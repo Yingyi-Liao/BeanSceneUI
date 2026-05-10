@@ -83,6 +83,23 @@ export default function ActiveOrdersScreen({ isOnline = true, onBack }) {
     Alert.alert('Order Updated', 'Order has been marked as Served!');
   };
 
+  const handleCancelOrder = (orderId) => {
+  Alert.alert(
+    'Cancel Order',
+    'Are you sure you want to cancel this order?',
+    [
+      { text: 'No', style: 'cancel' },
+      {
+        text: 'Yes, Cancel',
+        style: 'destructive',
+        onPress: () => {
+          // TODO: integrate backend cancellation
+          Alert.alert('Order Cancelled', `Order ${orderId} has been cancelled.`);
+        },
+      },
+    ]
+  );
+};
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -192,6 +209,14 @@ export default function ActiveOrdersScreen({ isOnline = true, onBack }) {
                         onPress={() => handleUpdateToServed(item.id)}
                       >
                         <Text style={styles.serveBtnText}>Mark Served</Text>
+                      </TouchableOpacity>
+                    )}
+                    {item.status === 'In-Progress' && (
+                      <TouchableOpacity
+                        style={styles.cancelBtn}
+                        onPress={() => handleCancelOrder(item.id)}
+                      >
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -335,7 +360,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   serveBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  
+  cancelBtn: {
+    backgroundColor: COLORS.errorRed,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
 
+  cancelBtnText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   backButton: { marginTop: 20, padding: 10, alignItems: 'center' },
   backButtonText: { color: '#083944', fontWeight: 'bold', fontSize: 16 },
 });

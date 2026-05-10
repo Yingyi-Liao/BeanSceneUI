@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   Text,
   View,
@@ -13,11 +13,10 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
-// Import your logo
 import BeanSceneLogo from './images/BeanSceneLogo.jpg';
 
 // --- MOCK DATA: ACTIVE ORDERS ---
-const MOCK_KITCHEN_ORDERS = [
+const MOCK_ACTIVE_ORDERS = [
   {
     id: 'ORD-101',
     table: 'T12',
@@ -27,29 +26,21 @@ const MOCK_KITCHEN_ORDERS = [
     status: 'In-Progress',
   },
   {
+    id: 'ORD-102',
+    table: 'T05',
+    timestamp: '10:20 AM',
+    person: 'Rui Chen',
+    items: ['Cheesecake', 'Coke'],
+    status: 'Completed',
+  },
+  {
     id: 'ORD-103',
     table: 'T08',
     timestamp: '10:25 AM',
     person: 'Yingyi',
     items: ['Grilled Steak'],
-    status:'In-Progress',
-  },
-  {
-    id: 'ORD-105',
-    table: 'T02',
-    timestamp: '10:30 AM',
-    person: 'Rui Chen',
-    items: ['Cheesecake', 'Coke'],
     status: 'In-Progress',
   },
-  {
-    id: 'ORD-106',
-    table: 'T02',
-    timestamp: '10:30 AM',
-    person: 'Rui Chen',
-    items: ['Cheesecake', 'Coke'],
-    status: 'Completed',
-  },  
 ];
 
 const COLORS = {
@@ -60,10 +51,11 @@ const COLORS = {
   errorRed: '#D32F2F',
   statusOnline: '#2E7D32',
   statusOffline: '#C62828',
+  lightGrey: '#F5F5F5',
 };
 
-export default function KitchenOrdersScreen({ isOnline = true, onBack }) {
-  const username = 'Yngyi';
+export default function ActiveOrdersScreen({ isOnline = true, onBack }) {
+  const username = 'Yingyi';
   const role = 'staff';
 
   const { width } = useWindowDimensions();
@@ -72,26 +64,42 @@ export default function KitchenOrdersScreen({ isOnline = true, onBack }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // --- FILTERING LOGIC (Only shows In-Progress) ---
-  const filteredOrders = MOCK_KITCHEN_ORDERS.filter((order) => {
+  // --- FILTERING LOGIC ---
+  const filteredOrders = MOCK_ACTIVE_ORDERS.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.table.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.items.join(' ').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch && order.status === 'In-Progress';
+    return matchesSearch;
   });
 
-  // --- TABLET GRID LOGIC ---
+  // --- ADD PLACEHOLDER FOR TABLET GRID ---
   const ordersForDisplay = [...filteredOrders];
   if (isTablet && ordersForDisplay.length % 2 !== 0) {
     ordersForDisplay.push({ id: 'placeholder', isPlaceholder: true });
   }
 
-  // --- ACTIONS ---
-  const handleUpdateToCompleted = (orderId) => {
-    Alert.alert('Order Updated', 'Order has been marked as Completed (Ready for Pickup)!');
+  const handleUpdateToServed = (orderId) => {
+    Alert.alert('Order Updated', 'Order has been marked as Served!');
   };
 
+  const handleCancelOrder = (orderId) => {
+  Alert.alert(
+    'Cancel Order',
+    'Are you sure you want to cancel this order?',
+    [
+      { text: 'No', style: 'cancel' },
+      {
+        text: 'Yes, Cancel',
+        style: 'destructive',
+        onPress: () => {
+          // TODO: integrate backend cancellation
+          Alert.alert('Order Cancelled', `Order ${orderId} has been cancelled.`);
+        },
+      },
+    ]
+  );
+};
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
@@ -127,28 +135,28 @@ export default function KitchenOrdersScreen({ isOnline = true, onBack }) {
         </View>
       </View>
 
-      {/* 3. MAIN CONTENT */}
-      <View style={styles.mainContent}>
-        <Text style={styles.screenTitle}>Kitchen Orders</Text>
+      {/* MAIN CONTENT */}
+      <View style={[styles.mainContent, isTablet && styles.mainContentTablet]}>
+        <Text style={styles.screenTitle}>Active Orders</Text>
 
-        {/* 4. SEARCH BAR */}
-        <View style={styles.searchContainer}>
+        {/* SEARCH BAR */}
+        <View style={[styles.searchContainer, isTablet && styles.searchContainerTablet]}>
           <TextInput
-            style={styles.searchBar}
+            style={[styles.searchBar, isTablet && styles.searchBarTablet]}
             placeholder="Search by Table or Order ID..."
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
         </View>
 
-        {/* 5. ERROR BOX */}
+        {/* ERROR BOX */}
         {errorMessage !== '' && (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         )}
 
-        {/* 6. ORDER LIST (Responsive) */}
+        {/* TABLET WRAPPER FOR MAX WIDTH */}
         <View style={isTablet && styles.tabletListWrapper}>
           <FlatList
             key={isTablet ? 'tablet' : 'mobile'}
@@ -195,12 +203,20 @@ export default function KitchenOrdersScreen({ isOnline = true, onBack }) {
                       <Text style={styles.statusBadgeText}>{item.status}</Text>
                     </View>
 
+                    {item.status === 'Completed' && (
+                      <TouchableOpacity
+                        style={styles.serveBtn}
+                        onPress={() => handleUpdateToServed(item.id)}
+                      >
+                        <Text style={styles.serveBtnText}>Mark Served</Text>
+                      </TouchableOpacity>
+                    )}
                     {item.status === 'In-Progress' && (
                       <TouchableOpacity
-                        style={styles.completeBtn}
-                        onPress={() => handleUpdateToCompleted(item.id)}
+                        style={styles.cancelBtn}
+                        onPress={() => handleCancelOrder(item.id)}
                       >
-                        <Text style={styles.completeBtnText}>Mark Completed</Text>
+                        <Text style={styles.cancelBtnText}>Cancel</Text>
                       </TouchableOpacity>
                     )}
                   </View>
@@ -210,7 +226,7 @@ export default function KitchenOrdersScreen({ isOnline = true, onBack }) {
           />
         </View>
 
-         {/* 7. BACK BUTTON */}
+        {/* BACK BUTTON */}
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back to Dashboard</Text>
         </TouchableOpacity>
@@ -260,8 +276,13 @@ const styles = StyleSheet.create({
   logoutTextSmall: { fontSize: 12, color: '#D32F2F', fontWeight: 'bold' },
 
   mainContent: { flex: 1, padding: 20 },
-  screenTitle: { fontSize: 24, fontWeight: 'bold', color: '#083944', marginBottom: 15 },
+  mainContentTablet: { paddingHorizontal: 40 },
+
+  screenTitle: { fontSize: 26, fontWeight: 'bold', color: '#083944', marginBottom: 15 },
+
   searchContainer: { marginBottom: 15 },
+  searchContainerTablet: { marginBottom: 25 },
+
   searchBar: {
     backgroundColor: '#F0F0F0',
     padding: 12,
@@ -270,12 +291,32 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#DDD',
   },
-  errorBox: { padding: 10, backgroundColor: '#FFEBEE', borderRadius: 8, borderWidth: 1, borderColor: '#D32F2F', marginBottom: 15 },
+  searchBarTablet: {
+    padding: 16,
+    fontSize: 18,
+  },
+
+  errorBox: {
+    padding: 10,
+    backgroundColor: '#FFEBEE',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D32F2F',
+    marginBottom: 15,
+  },
   errorText: { color: '#D32F2F', fontWeight: 'bold' },
 
-  tabletListWrapper: { width: '100%', maxWidth: 900, alignSelf: 'center' },
+  tabletListWrapper: {
+    width: '100%',
+    maxWidth: 900,
+    alignSelf: 'center',
+  },
 
-  placeholderCard: { width: '48%', marginBottom: 20, backgroundColor: 'transparent' },
+  placeholderCard: {
+    width: '48%',
+    marginBottom: 20,
+    backgroundColor: 'transparent',
+  },
 
   orderCard: {
     backgroundColor: 'white',
@@ -289,16 +330,19 @@ const styles = StyleSheet.create({
   orderCardTablet: {
     width: '48%',
   },
+
   orderHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   orderIdText: { fontSize: 18, fontWeight: 'bold', color: '#083944' },
   orderTimeText: { fontSize: 12, color: '#666' },
+
   orderBody: { marginBottom: 10 },
   tableText: { fontSize: 16, fontWeight: 'bold', color: '#333' },
   personText: { fontSize: 14, color: '#666' },
+
   itemsContainer: { marginBottom: 10 },
   itemText: { fontSize: 14, color: '#555' },
+
   statusRow: {
-    flex: 1,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -309,13 +353,26 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   statusBadgeText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
 
-  completeBtn: {
-    backgroundColor: '#4AA1B5',
+  serveBtn: {
+    backgroundColor: '#083944',
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 6,
   },
-  completeBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  serveBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  
+  cancelBtn: {
+    backgroundColor: COLORS.errorRed,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+
+  cancelBtnText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
   backButton: { marginTop: 20, padding: 10, alignItems: 'center' },
   backButtonText: { color: '#083944', fontWeight: 'bold', fontSize: 16 },
 });
