@@ -42,6 +42,14 @@ const MOCK_KITCHEN_ORDERS = [
     items: ['Cheesecake', 'Coke'],
     status: 'In-Progress',
   },
+  {
+    id: 'ORD-106',
+    table: 'T02',
+    timestamp: '10:30 AM',
+    person: 'Rui Chen',
+    items: ['Cheesecake', 'Coke'],
+    status: 'Completed',
+  },  
 ];
 
 const COLORS = {

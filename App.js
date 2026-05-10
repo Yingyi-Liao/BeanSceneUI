@@ -6,15 +6,51 @@ import {
   TouchableOpacity,
   SafeAreaView,
   Image,
+  TextInput,
+  FlatList,
   Alert,
   StatusBar,
-  ScrollView,
   useWindowDimensions,
 } from 'react-native';
 
-import { Picker } from '@react-native-picker/picker';
-import DateTimePicker from '@react-native-community/datetimepicker';
+// Import your logo
 import BeanSceneLogo from './images/BeanSceneLogo.jpg';
+
+// --- MOCK DATA: ACTIVE ORDERS ---
+const MOCK_KITCHEN_ORDERS = [
+  {
+    id: 'ORD-101',
+    table: 'T12',
+    timestamp: '10:15 AM',
+    person: 'Yingyi',
+    items: ['Garlic Bread', 'Spaghetti'],
+    status: 'In-Progress',
+  },
+  {
+    id: 'ORD-103',
+    table: 'T08',
+    timestamp: '10:25 AM',
+    person: 'Yingyi',
+    items: ['Grilled Steak'],
+    status:'In-Progress',
+  },
+  {
+    id: 'ORD-105',
+    table: 'T02',
+    timestamp: '10:30 AM',
+    person: 'Rui Chen',
+    items: ['Cheesecake', 'Coke'],
+    status: 'In-Progress',
+  },
+  {
+    id: 'ORD-106',
+    table: 'T02',
+    timestamp: '10:30 AM',
+    person: 'Rui Chen',
+    items: ['Cheesecake', 'Coke'],
+    status: 'Completed',
+  },  
+];
 
 const COLORS = {
   beanDarkBlue: '#083944',
@@ -24,78 +60,37 @@ const COLORS = {
   errorRed: '#D32F2F',
   statusOnline: '#2E7D32',
   statusOffline: '#C62828',
-  lightGrey: '#F5F5F5',
 };
 
-export default function ReportsScreen({ isOnline = true, onBack }) {
-  const username = 'Yingyi';
-  const role = 'manager';
+export default function KitchenOrdersScreen({ isOnline = true, onBack }) {
+  const username = 'Yngyi';
+  const role = 'staff';
 
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
+  const [searchQuery, setSearchQuery] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  // MOCK ORDER DATA
-  const [orders, setOrders] = useState([
-    { id: 'ORD-001', table: 'M1', total: 24.50, date: '2026-05-01', time: '09:15', status: 'Completed' },
-    { id: 'ORD-002', table: 'O3', total: 18.00, date: '2026-05-01', time: '10:22', status: 'Completed' },
-    { id: 'ORD-003', table: 'B2', total: 32.20, date: '2026-05-02', time: '11:40', status: 'In-Progress' },
-    { id: 'ORD-004', table: 'M4', total: 12.00, date: '2026-05-02', time: '12:05', status: 'Completed' },
-    { id: 'ORD-005', table: 'O7', total: 45.90, date: '2026-05-03', time: '13:55', status: 'Served' },
-  ]);
-
-  const [sortField, setSortField] = useState('');
-  const [sortAsc, setSortAsc] = useState(true);
-
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-
-  const [showStartPicker, setShowStartPicker] = useState(false);
-  const [showEndPicker, setShowEndPicker] = useState(false);
-
-  const getArrow = (field) => {
-    if (sortField !== field) return '';
-    return sortAsc ? ' ▲' : ' ▼';
-  };
-
-  const sortOrders = (field) => {
-    const newAsc = field === sortField ? !sortAsc : true;
-    setSortField(field);
-    setSortAsc(newAsc);
-
-    const sorted = [...orders].sort((a, b) => {
-      if (a[field] < b[field]) return newAsc ? -1 : 1;
-      if (a[field] > b[field]) return newAsc ? 1 : -1;
-      return 0;
-    });
-
-    setOrders(sorted);
-  };
-
-  const handleStartDateChange = (event, selectedDate) => {
-    setShowStartPicker(false);
-    if (selectedDate) {
-      const iso = selectedDate.toISOString().split('T')[0];
-      setStartDate(iso);
-    }
-  };
-
-  const handleEndDateChange = (event, selectedDate) => {
-    setShowEndPicker(false);
-    if (selectedDate) {
-      const iso = selectedDate.toISOString().split('T')[0];
-      setEndDate(iso);
-    }
-  };
-
-  const filteredOrders = orders.filter(order => {
-    const matchStatus = statusFilter ? order.status === statusFilter : true;
-    const matchStart = startDate ? order.date >= startDate : true;
-    const matchEnd = endDate ? order.date <= endDate : true;
-    return matchStatus && matchStart && matchEnd;
+  // --- FILTERING LOGIC (Only shows In-Progress) ---
+  const filteredOrders = MOCK_KITCHEN_ORDERS.filter((order) => {
+    const matchesSearch =
+      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.table.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.items.join(' ').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch && order.status === 'In-Progress';
   });
+
+  // --- TABLET GRID LOGIC ---
+  const ordersForDisplay = [...filteredOrders];
+  if (isTablet && ordersForDisplay.length % 2 !== 0) {
+    ordersForDisplay.push({ id: 'placeholder', isPlaceholder: true });
+  }
+
+  // --- ACTIONS ---
+  const handleUpdateToCompleted = (orderId) => {
+    Alert.alert('Order Updated', 'Order has been marked as Completed (Ready for Pickup)!');
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -132,125 +127,99 @@ export default function ReportsScreen({ isOnline = true, onBack }) {
         </View>
       </View>
 
-      {/* MAIN CONTENT */}
-      <ScrollView style={styles.mainContent} contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text style={styles.screenTitle}>Reports</Text>
+      {/* 3. MAIN CONTENT */}
+      <View style={styles.mainContent}>
+        <Text style={styles.screenTitle}>Kitchen Orders</Text>
 
+        {/* 4. SEARCH BAR */}
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchBar}
+            placeholder="Search by Table or Order ID..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+
+        {/* 5. ERROR BOX */}
         {errorMessage !== '' && (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{errorMessage}</Text>
           </View>
         )}
 
-        <View style={isTablet ? styles.tabletCenterWrapper : null}>
-          <View style={isTablet ? styles.tabletContent : null}>
+        {/* 6. ORDER LIST (Responsive) */}
+        <View style={isTablet && styles.tabletListWrapper}>
+          <FlatList
+            key={isTablet ? 'tablet' : 'mobile'}
+            data={ordersForDisplay}
+            numColumns={isTablet ? 2 : 1}
+            columnWrapperStyle={isTablet ? { gap: 20 } : null}
+            contentContainerStyle={{ paddingBottom: 40 }}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => {
+              if (item.isPlaceholder) {
+                return <View style={styles.placeholderCard} />;
+              }
 
-            <Text style={styles.filterTitle}>Filters</Text>
+              return (
+                <View style={[styles.orderCard, isTablet && styles.orderCardTablet]}>
+                  <View style={styles.orderHeader}>
+                    <Text style={styles.orderIdText}>{item.id}</Text>
+                    <Text style={styles.orderTimeText}>{item.timestamp}</Text>
+                  </View>
 
-            {/* START DATE */}
-            <Text style={styles.label}>Start Date</Text>
-            <TouchableOpacity
-              style={styles.dateField}
-              onPress={() => setShowStartPicker(true)}
-            >
-              <Text style={styles.dateFieldText}>
-                {startDate || 'Select Start Date'}
-              </Text>
-            </TouchableOpacity>
-            {showStartPicker && (
-              <DateTimePicker
-                value={startDate ? new Date(startDate) : new Date()}
-                mode="date"
-                display="default"
-                onChange={handleStartDateChange}
-              />
-            )}
+                  <View style={styles.orderBody}>
+                    <Text style={styles.tableText}>Table: {item.table}</Text>
+                    <Text style={styles.personText}>By: {item.person}</Text>
+                  </View>
 
-            {/* END DATE */}
-            <Text style={styles.label}>End Date</Text>
-            <TouchableOpacity
-              style={styles.dateField}
-              onPress={() => setShowEndPicker(true)}
-            >
-              <Text style={styles.dateFieldText}>
-                {endDate || 'Select End Date'}
-              </Text>
-            </TouchableOpacity>
-            {showEndPicker && (
-              <DateTimePicker
-                value={endDate ? new Date(endDate) : new Date()}
-                mode="date"
-                display="default"
-                onChange={handleEndDateChange}
-              />
-            )}
+                  <View style={styles.itemsContainer}>
+                    {item.items.map((orderItem, index) => (
+                      <Text key={index} style={styles.itemText}>• {orderItem}</Text>
+                    ))}
+                  </View>
 
-            {/* STATUS FILTER */}
-            <Text style={styles.label}>Status</Text>
-            <View style={styles.dropdownWrapper}>
-              <Picker
-                selectedValue={statusFilter}
-                onValueChange={(value) => setStatusFilter(value)}
-                style={styles.picker}
-              >
-                <Picker.Item label="All" value="" />
-                <Picker.Item label="In-Progress" value="In-Progress" />
-                <Picker.Item label="Completed" value="Completed" />
-                <Picker.Item label="Served" value="Served" />
-              </Picker>
-            </View>
+                  <View style={styles.statusRow}>
+                    <View
+                      style={[
+                        styles.statusBadge,
+                        {
+                          backgroundColor:
+                            item.status === 'Completed'
+                              ? COLORS.beanLightBlue
+                              : COLORS.beanMidBlue,
+                        },
+                      ]}
+                    >
+                      <Text style={styles.statusBadgeText}>{item.status}</Text>
+                    </View>
 
-            {/* TABLE HEADER */}
-            <View style={styles.tableHeader}>
-              <TouchableOpacity style={styles.col} onPress={() => sortOrders('id')}>
-                <Text style={styles.colHeader}>Order ID{getArrow('id')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.col} onPress={() => sortOrders('table')}>
-                <Text style={styles.colHeader}>Table{getArrow('table')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.col} onPress={() => sortOrders('total')}>
-                <Text style={styles.colHeader}>Total{getArrow('total')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.col} onPress={() => sortOrders('date')}>
-                <Text style={styles.colHeader}>Date{getArrow('date')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.col} onPress={() => sortOrders('time')}>
-                <Text style={styles.colHeader}>Time{getArrow('time')}</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.col} onPress={() => sortOrders('status')}>
-                <Text style={styles.colHeader}>Status{getArrow('status')}</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* TABLE ROWS */}
-            {filteredOrders.map((order, index) => (
-              <View key={index} style={styles.tableRow}>
-                <Text style={styles.col}>{order.id}</Text>
-                <Text style={styles.col}>{order.table}</Text>
-                <Text style={styles.col}>${order.total.toFixed(2)}</Text>
-                <Text style={styles.col}>{order.date}</Text>
-                <Text style={styles.col}>{order.time}</Text>
-                <Text style={styles.col}>{order.status}</Text>
-              </View>
-            ))}
-
-          </View>
+                    {item.status === 'In-Progress' && (
+                      <TouchableOpacity
+                        style={styles.completeBtn}
+                        onPress={() => handleUpdateToCompleted(item.id)}
+                      >
+                        <Text style={styles.completeBtnText}>Mark Completed</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </View>
+              );
+            }}
+          />
         </View>
 
+         {/* 7. BACK BUTTON */}
         <TouchableOpacity style={styles.backButton} onPress={onBack}>
           <Text style={styles.backButtonText}>← Back to Dashboard</Text>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
     </SafeAreaView>
   );
 }
 
-// STYLES
+// --- STYLES ---
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
 
@@ -291,88 +260,62 @@ const styles = StyleSheet.create({
   logoutTextSmall: { fontSize: 12, color: '#D32F2F', fontWeight: 'bold' },
 
   mainContent: { flex: 1, padding: 20 },
-  screenTitle: { fontSize: 26, fontWeight: 'bold', color: '#083944', marginBottom: 20 },
-
-  errorBox: {
-    padding: 10,
-    backgroundColor: '#FFEBEE',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#D32F2F',
-    marginBottom: 15,
-  },
-  errorText: { color: '#D32F2F', fontWeight: 'bold' },
-
-  tabletCenterWrapper: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  tabletContent: {
-    width: '100%',
-    maxWidth: 900,
-    paddingHorizontal: 20,
-  },
-
-  filterTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: COLORS.beanDarkBlue,
-  },
-
-  label: { fontSize: 16, fontWeight: 'bold', marginBottom: 5 },
-
-  dateField: {
-    borderWidth: 1,
-    borderColor: '#DDD',
+  screenTitle: { fontSize: 24, fontWeight: 'bold', color: '#083944', marginBottom: 15 },
+  searchContainer: { marginBottom: 15 },
+  searchBar: {
+    backgroundColor: '#F0F0F0',
     padding: 12,
     borderRadius: 8,
-    backgroundColor: '#F9F9F9',
-    marginBottom: 15,
-  },
-  dateFieldText: {
     fontSize: 16,
-    color: '#333',
-  },
-
-  dropdownWrapper: {
     borderWidth: 1,
     borderColor: '#DDD',
-    borderRadius: 8,
+  },
+  errorBox: { padding: 10, backgroundColor: '#FFEBEE', borderRadius: 8, borderWidth: 1, borderColor: '#D32F2F', marginBottom: 15 },
+  errorText: { color: '#D32F2F', fontWeight: 'bold' },
+
+  tabletListWrapper: { width: '100%', maxWidth: 900, alignSelf: 'center' },
+
+  placeholderCard: { width: '48%', marginBottom: 20, backgroundColor: 'transparent' },
+
+  orderCard: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 15,
     marginBottom: 15,
-    backgroundColor: '#F9F9F9',
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#EEE',
   },
-  picker: {
-    width: '100%',
-    height: 50,
+  orderCardTablet: {
+    width: '48%',
   },
-
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.beanMidBlue,
-    paddingVertical: 12,
-    borderRadius: 8,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  colHeader: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 14,
-    textAlign: 'center',
-  },
-  col: {
+  orderHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  orderIdText: { fontSize: 18, fontWeight: 'bold', color: '#083944' },
+  orderTimeText: { fontSize: 12, color: '#666' },
+  orderBody: { marginBottom: 10 },
+  tableText: { fontSize: 16, fontWeight: 'bold', color: '#333' },
+  personText: { fontSize: 14, color: '#666' },
+  itemsContainer: { marginBottom: 10 },
+  itemText: { fontSize: 14, color: '#555' },
+  statusRow: {
     flex: 1,
-    textAlign: 'center',
-    fontSize: 14,
-  },
-  tableRow: {
     flexDirection: 'row',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#EEE',
+    paddingTop: 10,
   },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
+  statusBadgeText: { color: 'white', fontSize: 11, fontWeight: 'bold' },
 
-  backButton: { marginTop: 30, alignItems: 'center' },
-  backButtonText: { color: '#666', fontSize: 14 },
+  completeBtn: {
+    backgroundColor: '#4AA1B5',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  completeBtnText: { color: 'white', fontSize: 12, fontWeight: 'bold' },
+  backButton: { marginTop: 20, padding: 10, alignItems: 'center' },
+  backButtonText: { color: '#083944', fontWeight: 'bold', fontSize: 16 },
 });
