@@ -7,71 +7,107 @@ import {
   SafeAreaView,
   Image,
   TextInput,
-  Alert,
   StatusBar,
   ScrollView,
   Switch,
   useWindowDimensions,
+  ActivityIndicator,
 } from 'react-native';
 
-import BeanSceneLogo from './images/BeanSceneLogo.jpg';
+import BeanSceneLogo from '../images/BeanSceneLogo.jpg';
+import { API_BASE } from '../constants/apibase';
+import { COLORS } from '../constants/colors';
+import * as SecureStore from 'expo-secure-store';
 
-const COLORS = {
-  beanDarkBlue: '#083944',
-  beanMidBlue: '#2F6672',
-  beanLightBlue: '#4AA1B5',
-  white: '#FFFFFF',
-  errorRed: '#D32F2F',
-  statusOnline: '#2E7D32',
-  statusOffline: '#C62828',
-  lightGrey: '#F5F5F5',
-};
-
-export default function UpdateCategoryScreen({ isOnline = true, onBack }) {
-  const username = 'Yingyi';
-  const role = 'manager';
+export default function CreateCategoryScreen({ navigation, route }) {
+  const { username, role, isOnline = true } = route.params || {};
 
   const { width } = useWindowDimensions();
   const isTablet = width >= 768;
 
-  // Mock existing category values
-  const [categoryName, setCategoryName] = useState('Desserts');
-  const [description, setDescription] = useState('Sweet dishes and treats.');
+  const [categoryName, setCategoryName] = useState('');
+  const [description, setDescription] = useState('');
   const [isActive, setIsActive] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  // -----------------------------
+  // SUBMIT NEW CATEGORY
+  // -----------------------------
+  const handleSubmit = async () => {
     if (!isOnline) {
-      setErrorMessage('❌ Cannot Update: System is OFFLINE');
+      setErrorMessage('❌ Cannot Submit: System is OFFLINE');
+      setSuccessMessage('');
       return;
     }
-    if (!categoryName) {
+    if (!categoryName.trim()) {
       setErrorMessage('❌ Error: Category name is required');
+      setSuccessMessage('');
       return;
     }
 
-    Alert.alert(
-      'Success',
-      `Category "${categoryName}" has been updated successfully!`,
-      [{ text: 'OK', onPress: onBack }]
-    );
+    try {
+      setLoading(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+
+      const token = await SecureStore.getItemAsync('jwt');
+
+      const payload = {
+        categoryName: categoryName.trim(),
+        description: description.trim(),
+        isActive,
+      };
+
+      const response = await fetch(`${API_BASE}/api/category/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await response.json();
+
+      if (!response.ok || !json.success) {
+        throw new Error(json.error || 'Failed to create category');
+      }
+
+      // ⭐ SUCCESS FEEDBACK
+      setSuccessMessage('✔ Category created successfully!');
+      setErrorMessage('');
+
+      // Navigate back after brief confirmation
+      setTimeout(() => {
+        navigation.navigate('CategoryManagement', {
+          username,
+          role,
+          isOnline,
+        });
+      }, 800);
+
+    } catch (err) {
+      setErrorMessage('❌ ' + err.message);
+      setSuccessMessage('');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDelete = () => {
-    if (!isOnline) {
-      setErrorMessage('❌ Cannot Delete: System is OFFLINE');
-      return;
-    }
+  const handleBack = () => {
+    navigation.navigate('CategoryManagement', {
+      username,
+      role,
+      isOnline,
+    });
+  };
 
-    Alert.alert(
-      'Confirm Delete',
-      `Are you sure you want to delete "${categoryName}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => Alert.alert('Deleted!') },
-      ]
-    );
+  const handleLogout = async () => {
+      await SecureStore.deleteItemAsync('jwt');
+      navigation.replace('Login');
   };
 
   return (
@@ -90,19 +126,23 @@ export default function UpdateCategoryScreen({ isOnline = true, onBack }) {
         </Text>
       </View>
 
-      {/* HEADER */}
+      {/* HEADER WITH BACK BUTTON */}
       <View style={[styles.headerContainer, isTablet && styles.headerContainerTablet]}>
+        <TouchableOpacity style={styles.headerBackButton} onPress={handleBack}>
+          <Text style={styles.headerBackText}>← Back</Text>
+        </TouchableOpacity>
+
         <Image source={BeanSceneLogo} style={styles.logo} resizeMode="contain" />
 
         <View style={[styles.userProfile, isTablet && styles.userProfileTablet]}>
           <View style={{ marginRight: 10 }}>
             <Text style={styles.userNameText}>{username}</Text>
-            <Text style={styles.userRoleText}>{role.toUpperCase()}</Text>
+            <Text style={styles.userRoleText}>{role?.toUpperCase()}</Text>
           </View>
 
           <TouchableOpacity
             style={styles.logoutBtnSmall}
-            onPress={() => Alert.alert('Logout', 'Logged out')}
+            onPress={handleLogout}
           >
             <Text style={styles.logoutTextSmall}>Log Off</Text>
           </TouchableOpacity>
@@ -111,7 +151,14 @@ export default function UpdateCategoryScreen({ isOnline = true, onBack }) {
 
       {/* MAIN CONTENT */}
       <ScrollView style={styles.mainContent} contentContainerStyle={{ paddingBottom: 40 }}>
-        <Text style={styles.screenTitle}>Update/Delete Category</Text>
+        <Text style={styles.screenTitle}>Create New Category</Text>
+
+        {/* SUCCESS BOX */}
+        {successMessage !== '' && (
+          <View style={styles.successBox}>
+            <Text style={styles.successText}>{successMessage}</Text>
+          </View>
+        )}
 
         {/* ERROR BOX */}
         {errorMessage !== '' && (
@@ -120,17 +167,28 @@ export default function UpdateCategoryScreen({ isOnline = true, onBack }) {
           </View>
         )}
 
-        {/* CENTERED TABLET LAYOUT */}
-        <View style={isTablet ? styles.tabletCenterWrapper : null}>
-          <View style={isTablet ? styles.tabletContent : null}>
+        {loading && (
+          <ActivityIndicator
+            size="large"
+            color={COLORS.beanMidBlue}
+            style={{ marginBottom: 20 }}
+          />
+        )}
 
+        {/* TABLET LAYOUT */}
+        <View style={isTablet ? styles.tabletCenterWrapper : null}>
+          <View style={styles.tabletContent}>
+
+            {/* CATEGORY NAME */}
             <Text style={styles.label}>Category Name</Text>
             <TextInput
               style={[styles.inputField, isTablet && styles.inputFieldTablet]}
+              placeholder="e.g. Desserts"
               value={categoryName}
               onChangeText={setCategoryName}
             />
 
+            {/* DESCRIPTION */}
             <Text style={styles.label}>Description</Text>
             <TextInput
               style={[
@@ -138,11 +196,13 @@ export default function UpdateCategoryScreen({ isOnline = true, onBack }) {
                 { height: 100, textAlignVertical: 'top' },
                 isTablet && styles.inputFieldTablet,
               ]}
+              placeholder="Describe this category..."
               multiline
               value={description}
               onChangeText={setDescription}
             />
 
+            {/* ACTIVE SWITCH */}
             <View style={styles.switchContainer}>
               <Text style={styles.label}>Category Active?</Text>
               <Switch
@@ -153,22 +213,12 @@ export default function UpdateCategoryScreen({ isOnline = true, onBack }) {
               />
             </View>
 
-            {/* UPDATE BUTTON */}
+            {/* SUBMIT BUTTON */}
             <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-              <Text style={styles.submitBtnText}>UPDATE CATEGORY</Text>
-            </TouchableOpacity>
-
-            {/* DELETE BUTTON */}
-            <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-              <Text style={styles.deleteBtnText}>DELETE CATEGORY</Text>
+              <Text style={styles.submitBtnText}>SUBMIT CATEGORY</Text>
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* BACK BUTTON */}
-        <TouchableOpacity style={styles.backButton} onPress={onBack}>
-          <Text style={styles.backButtonText}>← Back to Category Management</Text>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -191,13 +241,26 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 15,
-    backgroundColor: '#F8F8F8',
+    backgroundColor: COLORS.headerBg,
     borderBottomWidth: 1,
-    borderBottomColor: '#DDD',
+    borderBottomColor: COLORS.headerBorder,
   },
   headerContainerTablet: {
     paddingHorizontal: 40,
     paddingVertical: 25,
+  },
+
+  headerBackButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.lightGrey,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  headerBackText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: COLORS.beanDarkBlue,
   },
 
   logo: { width: 120, height: 50 },
@@ -206,48 +269,62 @@ const styles = StyleSheet.create({
   userProfileTablet: { gap: 20 },
 
   logoutBtnSmall: {
-    backgroundColor: '#FFEBEE',
+    backgroundColor: COLORS.errorBg,
     padding: 6,
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderColor: COLORS.errorBorder,
   },
-  logoutTextSmall: { fontSize: 12, color: '#D32F2F', fontWeight: 'bold' },
+  logoutTextSmall: { fontSize: 12, color: COLORS.errorRed, fontWeight: 'bold' },
 
   mainContent: { flex: 1, padding: 20 },
-  screenTitle: { fontSize: 26, fontWeight: 'bold', color: '#083944', marginBottom: 20 },
+  screenTitle: { fontSize: 26, fontWeight: 'bold', color: COLORS.beanDarkBlue, marginBottom: 20 },
 
-  errorBox: {
+  /* SUCCESS BOX */
+  successBox: {
     padding: 10,
-    backgroundColor: '#FFEBEE',
+    backgroundColor: '#E8F5E9',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#D32F2F',
+    borderColor: '#66BB6A',
     marginBottom: 15,
   },
-  errorText: { color: '#D32F2F', fontWeight: 'bold' },
+  successText: {
+    color: '#2E7D32',
+    fontWeight: 'bold',
+  },
 
-  /* CENTERED TABLET LAYOUT */
+  /* ERROR BOX */
+  errorBox: {
+    padding: 10,
+    backgroundColor: COLORS.errorBg,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.errorBorder,
+    marginBottom: 15,
+  },
+  errorText: { color: COLORS.errorRed, fontWeight: 'bold' },
+
   tabletCenterWrapper: {
     width: '100%',
     alignItems: 'center',
   },
+
   tabletContent: {
     width: '100%',
     maxWidth: 700,
-    paddingHorizontal: 20,
   },
 
   label: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 5 },
 
   inputField: {
     borderWidth: 1,
-    borderColor: '#DDD',
+    borderColor: COLORS.headerBorder,
     padding: 12,
     borderRadius: 8,
     fontSize: 16,
     marginBottom: 15,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: COLORS.surface,
   },
   inputFieldTablet: {
     padding: 16,
@@ -260,7 +337,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#EEE',
+    borderBottomColor: COLORS.headerBorder,
     marginBottom: 20,
   },
 
@@ -271,17 +348,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
-  submitBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-
-  deleteBtn: {
-    backgroundColor: COLORS.errorRed,
-    padding: 18,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 15,
-  },
-  deleteBtnText: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-
-  backButton: { marginTop: 30, alignItems: 'center' },
-  backButtonText: { color: '#666', fontSize: 14 },
+  submitBtnText: { color: COLORS.white, fontSize: 18, fontWeight: 'bold' },
 });
