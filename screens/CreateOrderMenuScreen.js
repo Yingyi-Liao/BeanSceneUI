@@ -22,6 +22,14 @@ import { API_BASE } from "../constants/apibase.js";
 import { COLORS } from "../constants/colors";
 import { useOrder } from "../context/OrderContext";
 
+import {
+  saveCategoriesFile,
+  saveMenuFile,
+  loadCategoriesFile,
+  loadMenuFile,
+} from "../storage/LocalFiles";
+
+
 export default function CreateOrderMenuScreen() {
   const navigation = useNavigation();
   const route = useRoute();
@@ -43,83 +51,92 @@ export default function CreateOrderMenuScreen() {
   const [tableNumber, setTableNumber] = useState("");
   const [note, setNote] = useState("");
 
+// Load categories and menu from API (with offline fallback)
+  const loadCategoriesOnline = async () => {
+    try {
+      const token = await SecureStore.getItemAsync("jwt");
+
+      const response = await fetch(`${API_BASE}/api/category`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const json = await response.json();
+      if (!response.ok) return null;
+
+      const map = {};
+      json.data.forEach((cat) => {
+        map[cat.id] = cat.categoryName;
+      });
+
+      const categoryList = ["All", ...json.data.map((c) => c.categoryName)];
+
+      setCategories(categoryList);
+      saveCategoriesFile(categoryList); // ⭐ Save offline
+
+      return map;
+    } catch {
+      return null;
+    }
+  };
+
+// Load menu items, map category names, and handle images (with offline fallback)
+  const loadMenuOnline = async (categoryMap) => {
+    try {
+      const token = await SecureStore.getItemAsync("jwt");
+
+      const response = await fetch(`${API_BASE}/api/item`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const json = await response.json();
+      if (!response.ok) return;
+
+      const mapped = json.data.map((item) => ({
+        ...item,
+        price: parseFloat(item.price),
+        categoryName: categoryMap[item.categories?.[0]] || "Unknown",
+        imageUrl: item.file ? `${API_BASE}/static/${item.file}` : null, // ⭐ Remote only
+      }));
+
+      setMenu(mapped);
+      saveMenuFile(mapped); // ⭐ Save offline
+    } catch {
+      console.log("Failed to load menu online");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+// On mount: load cached data first, then fetch online if possible
   useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const token = await SecureStore.getItemAsync("jwt");
+    const loadAll = async () => {
+      // 1. Load cached JSON files first
+      const cachedCategories = await loadCategoriesFile();
+      const cachedMenu = await loadMenuFile();
 
-        const response = await fetch(`${API_BASE}/api/category`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const json = await response.json();
-
-        if (!response.ok) {
-          Alert.alert("Error", json.error || "Failed to load categories");
-          return null;
-        }
-
-        const map = {};
-        json.data.forEach((cat) => {
-          map[cat.id] = cat.categoryName;
-        });
-
-        setCategories(["All", ...json.data.map((c) => c.categoryName)]);
-        return map;
-      } catch {
-        Alert.alert("Error", "Failed to load categories");
-        return null;
-      }
-    };
-
-    const loadMenu = async (categoryMap) => {
-      try {
-        const token = await SecureStore.getItemAsync("jwt");
-        if (!token) {
-          navigation.replace("Login");
-          return;
-        }
-
-        const response = await fetch(`${API_BASE}/api/item`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        const json = await response.json();
-
-        if (!response.ok) {
-          Alert.alert("Error", json.error || "Failed to load menu");
-          return;
-        }
-
-        const mapped = json.data.map((item) => ({
-          ...item,
-          categoryName: categoryMap
-            ? categoryMap[item.categories?.[0]] || "Unknown"
-            : "Unknown",
-          imageUrl: item.file ? `${API_BASE}/static/${item.file}` : null,
-        }));
-
-        setMenu(mapped);
-      } catch {
-        Alert.alert("Error", "Failed to load menu");
-      } finally {
+      if (cachedCategories) setCategories(cachedCategories);
+      if (cachedMenu) {
+        setMenu(cachedMenu);
         setLoading(false);
       }
-    };
 
-    const loadAll = async () => {
-      const categoryMap = await loadCategories();
-      await loadMenu(categoryMap || {});
+      // 2. If online → fetch fresh data and overwrite JSON files
+      if (isOnline) {
+        const categoryMap = await loadCategoriesOnline();
+        await loadMenuOnline(categoryMap || {});
+      }
     };
 
     loadAll();
   }, []);
 
+// Handle user logout
   const handleLogout = async () => {
     await SecureStore.deleteItemAsync("jwt");
     navigation.replace("Login");
   };
 
+// Filter menu based on search and category selection
   const filteredMenu = menu.filter((item) => {
     const name = item.itemName || "";
     const categoryName = item.categoryName || "";
@@ -138,6 +155,7 @@ export default function CreateOrderMenuScreen() {
     0
   );
 
+// Handle order submission
   const handleSubmitOrder = async () => {
     if (!tableNumber.trim()) {
       Alert.alert("Validation", "Please enter a table number.");
@@ -194,6 +212,7 @@ export default function CreateOrderMenuScreen() {
     }
   };
 
+// Show loading state while fetching menu
   if (loading) {
     return (
       <SafeAreaView style={styles.loadingContainer}>
@@ -203,6 +222,7 @@ export default function CreateOrderMenuScreen() {
     );
   }
 
+// Main render functions for menu list and order summary
   const renderMenuList = () => (
     <View style={{ flex: 2 }}>
       <View style={styles.searchContainer}>
@@ -301,6 +321,15 @@ export default function CreateOrderMenuScreen() {
                       updateQty(item.id, newQty);
                     }
                   }}
+                  onLongPress={() => {
+                    const newQty = item.qty - 5;
+                    if (newQty <= 0) {
+                      removeItem(item.id);
+                    } else {
+                      updateQty(item.id, newQty);
+                    }
+                  }}
+                  delayLongPress={500}
                 >
                   <Text style={styles.qtyBtnText}>-</Text>
                 </TouchableOpacity>
@@ -310,6 +339,8 @@ export default function CreateOrderMenuScreen() {
                 <TouchableOpacity
                   style={styles.qtyBtn}
                   onPress={() => updateQty(item.id, item.qty + 1)}
+                  onLongPress={() => updateQty(item.id, item.qty + 5)}
+                  delayLongPress={500}
                 >
                   <Text style={styles.qtyBtnText}>+</Text>
                 </TouchableOpacity>
@@ -423,6 +454,7 @@ export default function CreateOrderMenuScreen() {
   );
 }
 
+// Styles for the CreateOrderMenuScreen component
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.white },
 

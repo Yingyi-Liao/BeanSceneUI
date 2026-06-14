@@ -41,53 +41,65 @@ export default function KitchenOrdersScreen({ route, navigation }) {
   };
 
   // --- FETCH ORDERS ---
-  const fetchKitchenOrders = async () => {
-    try {
-      setLoading(true);
-      setErrorMessage('');
+  const fetchKitchenOrders = async (controller) => {
+  try {
+    setLoading(true);
+    setErrorMessage('');
 
-      const token = await loadToken();
-      if (!token) return;
+    const token = await loadToken();
+    if (!token) return;
 
-      const response = await fetch(`${API_BASE}/api/order`, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-      });
+    const response = await fetch(`${API_BASE}/api/order`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      signal: controller.signal, // hook AbortController into fetch
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        setErrorMessage(data.error || 'Failed to load orders');
-        return;
-      }
-
-      const normalized = (data.data || []).map((o) => ({
-        ...o,
-        status: o.status ? o.status.toLowerCase() : 'pending',
-        table: o.tableNumber,
-        person: o.createdBy,
-        timestamp: o.createdAt?.seconds
-          ? new Date(o.createdAt.seconds * 1000).toLocaleTimeString()
-          : '',
-        items: o.items,
-      }));
-
-      const kitchenOrders = normalized.filter(
-        (o) => o.status === 'pending' || o.status === 'in-progress'
-      );
-
-      setOrders(kitchenOrders);
-    } catch (err) {
-      setErrorMessage('Network error: ' + err.message);
-    } finally {
-      setLoading(false);
+    if (!response.ok) {
+      setErrorMessage(data.error || 'Failed to load orders');
+      return;
     }
-  };
+
+    const normalized = (data.data || []).map((o) => ({
+      ...o,
+      status: o.status ? o.status.toLowerCase() : 'pending',
+      table: o.tableNumber,
+      person: o.createdBy,
+      timestamp: o.createdAt?.seconds
+        ? new Date(o.createdAt.seconds * 1000).toLocaleTimeString()
+        : '',
+      items: o.items,
+    }));
+
+    const kitchenOrders = normalized.filter(
+      (o) => o.status === 'pending' || o.status === 'in-progress'
+    );
+
+    setOrders(kitchenOrders);
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      // fetch was cancelled; ignore
+      return;
+    }
+    setErrorMessage('Network error: ' + err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
-    fetchKitchenOrders();
+    const controller = new AbortController();
+
+    fetchKitchenOrders(controller);
+
+    return () => {
+      controller.abort(); // cancel in‑flight fetch on unmount
+    };
   }, []);
 
   // --- UPDATE STATUS ---

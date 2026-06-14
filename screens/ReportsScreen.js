@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Image,
   Alert,
+  TextInput,
 } from "react-native";
 
 import * as SecureStore from "expo-secure-store";
@@ -18,6 +19,84 @@ import { Picker } from "@react-native-picker/picker";
 import { COLORS } from "../constants/colors";
 import { fetchReportOrders } from "../services/reportService";
 import BeanSceneLogo from "../images/BeanSceneLogo.jpg";
+
+// MERGE SORT
+function mergeSort(arr, field, ascending = true) {
+  if (arr.length <= 1) return arr;
+
+  const mid = Math.floor(arr.length / 2);
+
+  const left = mergeSort(arr.slice(0, mid), field, ascending);
+  const right = mergeSort(arr.slice(mid), field, ascending);
+
+  return merge(left, right, field, ascending);
+}
+
+function merge(left, right, field, ascending) {
+  const result = [];
+
+  while (left.length && right.length) {
+    let leftVal = left[0][field];
+    let rightVal = right[0][field];
+
+    if (field === "createdAt") {
+      leftVal = new Date(leftVal).getTime();
+      rightVal = new Date(rightVal).getTime();
+    }
+
+  if (typeof leftVal === "string") {
+    const comparison = leftVal.localeCompare(rightVal);
+
+    if (ascending) {
+      if (comparison <= 0) {
+        result.push(left.shift());
+      } else {
+        result.push(right.shift());
+      }
+    } else {
+      if (comparison >= 0) {
+        result.push(left.shift());
+      } else {
+        result.push(right.shift());
+      }
+    }
+  } else {
+    const shouldTakeLeft = ascending
+      ? leftVal <= rightVal
+      : leftVal >= rightVal;
+
+    if (shouldTakeLeft) {
+      result.push(left.shift());
+    } else {
+      result.push(right.shift());
+    }
+  }
+  }
+
+  return [...result, ...left, ...right];
+}
+
+// BINARY SEARCH
+function binarySearch(orders, targetId) {
+  let left = 0;
+  let right = orders.length - 1;
+
+  while (left <= right) {
+    const mid = Math.floor((left + right) / 2);
+
+    if (orders[mid].id === targetId) {
+      return orders[mid];
+    }
+
+    if (orders[mid].id < targetId) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
+    }
+  }
+
+  return null;
+}
 
 export default function ReportsScreen({ route, navigation }) {
   const { username, role, isOnline = true } = route.params || {};
@@ -36,6 +115,8 @@ export default function ReportsScreen({ route, navigation }) {
   const [sortAsc, setSortAsc] = useState(true);
 
   const [errorMessage, setErrorMessage] = useState("");
+
+  const [searchId, setSearchId] = useState("");
 
   useEffect(() => {
     loadOrders();
@@ -75,18 +156,7 @@ export default function ReportsScreen({ route, navigation }) {
       );
     }
 
-    result.sort((a, b) => {
-      const A = a[sortField];
-      const B = b[sortField];
-
-      if (sortField === "total") {
-        return sortAsc ? A - B : B - A;
-      }
-
-      return sortAsc
-        ? String(A).localeCompare(String(B))
-        : String(B).localeCompare(String(A));
-    });
+  result = mergeSort(result, sortField, sortAsc);
 
     setFilteredOrders(result);
   }
@@ -116,6 +186,27 @@ export default function ReportsScreen({ route, navigation }) {
     setShowEndPicker(false);
     if (selected) {
       setEndDate(selected.toISOString().split("T")[0]);
+    }
+  }
+
+  function handleSearch() {
+    if (!searchId) {
+      applyFilters();
+      return;
+    }
+
+  const sortedOrders = mergeSort([...orders], "id", true);
+
+    const foundOrder = binarySearch(
+      sortedOrders,
+      Number(searchId)
+    );
+
+    if (foundOrder) {
+      setFilteredOrders([foundOrder]);
+    } else {
+      Alert.alert("Not Found", "Order ID not found.");
+      setFilteredOrders([]);
     }
   }
 
@@ -229,6 +320,25 @@ export default function ReportsScreen({ route, navigation }) {
             <Picker.Item label="Cancelled" value="cancelled" />
           </Picker>
         </View>
+
+        <Text style={styles.label}>Search Order ID</Text>
+
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Enter Order ID"
+          keyboardType="numeric"
+          value={searchId}
+          onChangeText={setSearchId}
+        />
+
+        <TouchableOpacity
+          style={styles.searchButton}
+          onPress={handleSearch}
+        >
+          <Text style={styles.searchButtonText}>
+            Search
+          </Text>
+        </TouchableOpacity>
 
         {/* TABLE HEADER */}
         <View style={styles.tableHeader}>
@@ -367,6 +477,28 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 50,
     color: COLORS.textDark,
+  },
+
+  searchInput: {
+  borderWidth: 1,
+  borderColor: COLORS.beanLightGrey,
+  borderRadius: 8,
+  padding: 12,
+  backgroundColor: COLORS.surface,
+  marginBottom: 10,
+},
+
+  searchButton: {
+    backgroundColor: COLORS.beanDarkBlue,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginBottom: 20,
+  },
+
+  searchButtonText: {
+    color: COLORS.white,
+    fontWeight: "bold",
   },
 
   tableHeader: {
