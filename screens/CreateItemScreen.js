@@ -4,7 +4,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   TextInput,
   StatusBar,
@@ -15,6 +14,7 @@ import {
   Alert,
 } from "react-native";
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import { Picker } from "@react-native-picker/picker";
 import * as ImagePicker from "expo-image-picker";
 import * as SecureStore from "expo-secure-store";

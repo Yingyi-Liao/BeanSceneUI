@@ -1,9 +1,38 @@
-import React, { useState, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: CreateOrderMenuScreen.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: CreateOrderMenuScreen.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import React, { useState, useEffect } from "react";
 import {
   Text,
   View,
   StyleSheet,
   TouchableOpacity,
+  SafeAreaView,
   Image,
   TextInput,
   ScrollView,
@@ -13,7 +42,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 
-import {SafeAreaView} from 'react-native-safe-area-context';
 import * as SecureStore from "expo-secure-store";
 import { useNavigation, useRoute } from "@react-navigation/native";
 
@@ -85,7 +113,7 @@ export default function CreateOrderMenuScreen() {
  * @async
  * @function loadMenuOnline
  * @param {Object} categoryMap - Mapping of category IDs to names.
- * @returns {Promise<void>}
+ * @returns {Promise&lt;void>}
  */
   const loadMenuOnline = async (categoryMap) => {
     try {
@@ -121,7 +149,7 @@ export default function CreateOrderMenuScreen() {
  *
  * @async
  * @function loadAll
- * @returns {Promise<void>}
+ * @returns {Promise&lt;void>}
  * @example
  * await loadAll();
  */
@@ -163,7 +191,7 @@ export default function CreateOrderMenuScreen() {
     const matchesSearch =
       name.toLowerCase().includes(searchQuery.toLowerCase());
 
-    return matchesCategory && matchesSearch;
+    return matchesCategory &amp;&amp; matchesSearch;
   });
 
   const orderTotal = orderItems.reduce(
@@ -231,107 +259,107 @@ export default function CreateOrderMenuScreen() {
 // Show loading state while fetching menu
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.beanLightBlue} />
-        <Text style={{ marginTop: 10, color: COLORS.textDark }}>Loading menu...</Text>
-      </SafeAreaView>
+      &lt;SafeAreaView style={styles.loadingContainer}>
+        &lt;ActivityIndicator size="large" color={COLORS.beanLightBlue} />
+        &lt;Text style={{ marginTop: 10, color: COLORS.textDark }}>Loading menu...&lt;/Text>
+      &lt;/SafeAreaView>
     );
   }
 
 // Main render functions for menu list and order summary
   const renderMenuList = () => (
-    <View style={{ flex: 2 }}>
-      <View style={styles.searchContainer}>
-        <TextInput
+    &lt;View style={{ flex: 2 }}>
+      &lt;View style={styles.searchContainer}>
+        &lt;TextInput
           style={styles.searchBar}
           placeholder="Search for an item..."
           placeholderTextColor={COLORS.textPlaceholder}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-      </View>
+      &lt;/View>
 
-      <View style={styles.categoryWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      &lt;View style={styles.categoryWrapper}>
+        &lt;ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {categories.map((cat) => (
-            <TouchableOpacity
+            &lt;TouchableOpacity
               key={cat}
               style={[
                 styles.categoryCard,
-                selectedCategory === cat && { backgroundColor: COLORS.beanLightBlue },
+                selectedCategory === cat &amp;&amp; { backgroundColor: COLORS.beanLightBlue },
               ]}
               onPress={() => setSelectedCategory(cat)}
             >
-              <Text
+              &lt;Text
                 style={[
                   styles.categoryText,
-                  selectedCategory === cat && { color: COLORS.white },
+                  selectedCategory === cat &amp;&amp; { color: COLORS.white },
                 ]}
               >
                 {cat}
-              </Text>
-            </TouchableOpacity>
+              &lt;/Text>
+            &lt;/TouchableOpacity>
           ))}
-        </ScrollView>
-      </View>
+        &lt;/ScrollView>
+      &lt;/View>
 
-      <View style={isTablet ? styles.gridTablet : styles.listMobile}>
+      &lt;View style={isTablet ? styles.gridTablet : styles.listMobile}>
         {filteredMenu.map((item) => (
-          <View
+          &lt;View
             key={item.id}
-            style={[styles.itemCard, isTablet && styles.itemCardTablet]}
+            style={[styles.itemCard, isTablet &amp;&amp; styles.itemCardTablet]}
           >
             {item.imageUrl ? (
-              <Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
+              &lt;Image source={{ uri: item.imageUrl }} style={styles.itemImage} />
             ) : (
-              <View style={[styles.itemImage, styles.imagePlaceholder]}>
-                <Text style={{ color: COLORS.textPlaceholder, fontSize: 10 }}>
+              &lt;View style={[styles.itemImage, styles.imagePlaceholder]}>
+                &lt;Text style={{ color: COLORS.textPlaceholder, fontSize: 10 }}>
                   No image
-                </Text>
-              </View>
+                &lt;/Text>
+              &lt;/View>
             )}
 
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemName}>{item.itemName}</Text>
-              <Text style={styles.itemCategory}>{item.categoryName}</Text>
-              <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+            &lt;View style={styles.itemInfo}>
+              &lt;Text style={styles.itemName}>{item.itemName}&lt;/Text>
+              &lt;Text style={styles.itemCategory}>{item.categoryName}&lt;/Text>
+              &lt;Text style={styles.itemPrice}>${item.price.toFixed(2)}&lt;/Text>
 
-              <TouchableOpacity
+              &lt;TouchableOpacity
                 style={styles.addToOrderBtnSmall}
                 onPress={() => addItem(item, 1)}
               >
-                <Text style={styles.addToOrderTextSmall}>Add</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+                &lt;Text style={styles.addToOrderTextSmall}>Add&lt;/Text>
+              &lt;/TouchableOpacity>
+            &lt;/View>
+          &lt;/View>
         ))}
-      </View>
-    </View>
+      &lt;/View>
+    &lt;/View>
   );
 
   const renderOrderSummary = () => (
-    <View style={[styles.orderSummaryContainer, isTablet && { flex: 1 }]}>
-      <Text style={styles.orderSummaryTitle}>Order Summary</Text>
+    &lt;View style={[styles.orderSummaryContainer, isTablet &amp;&amp; { flex: 1 }]}>
+      &lt;Text style={styles.orderSummaryTitle}>Order Summary&lt;/Text>
 
       {orderItems.length === 0 ? (
-        <Text style={styles.emptyOrderText}>No items added yet.</Text>
+        &lt;Text style={styles.emptyOrderText}>No items added yet.&lt;/Text>
       ) : (
-        <ScrollView style={{ maxHeight: isTablet ? "70%" : 250 }}>
+        &lt;ScrollView style={{ maxHeight: isTablet ? "70%" : 250 }}>
           {orderItems.map((item) => (
-            <View key={item.id} style={styles.orderItemRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.orderItemName}>{item.itemName}</Text>
-                <Text style={styles.orderItemPrice}>
+            &lt;View key={item.id} style={styles.orderItemRow}>
+              &lt;View style={{ flex: 1 }}>
+                &lt;Text style={styles.orderItemName}>{item.itemName}&lt;/Text>
+                &lt;Text style={styles.orderItemPrice}>
                   ${item.price.toFixed(2)} each
-                </Text>
-              </View>
+                &lt;/Text>
+              &lt;/View>
 
-              <View style={styles.orderQtyRow}>
-                <TouchableOpacity
+              &lt;View style={styles.orderQtyRow}>
+                &lt;TouchableOpacity
                   style={styles.qtyBtn}
                   onPress={() => {
                     const newQty = item.qty - 1;
-                    if (newQty <= 0) {
+                    if (newQty &lt;= 0) {
                       removeItem(item.id);
                     } else {
                       updateQty(item.id, newQty);
@@ -339,7 +367,7 @@ export default function CreateOrderMenuScreen() {
                   }}
                   onLongPress={() => {
                     const newQty = item.qty - 5;
-                    if (newQty <= 0) {
+                    if (newQty &lt;= 0) {
                       removeItem(item.id);
                     } else {
                       updateQty(item.id, newQty);
@@ -347,92 +375,92 @@ export default function CreateOrderMenuScreen() {
                   }}
                   delayLongPress={500}
                 >
-                  <Text style={styles.qtyBtnText}>-</Text>
-                </TouchableOpacity>
+                  &lt;Text style={styles.qtyBtnText}>-&lt;/Text>
+                &lt;/TouchableOpacity>
 
-                <Text style={styles.qtyNumber}>{item.qty}</Text>
+                &lt;Text style={styles.qtyNumber}>{item.qty}&lt;/Text>
 
-                <TouchableOpacity
+                &lt;TouchableOpacity
                   style={styles.qtyBtn}
                   onPress={() => updateQty(item.id, item.qty + 1)}
                   onLongPress={() => updateQty(item.id, item.qty + 5)}
                   delayLongPress={500}
                 >
-                  <Text style={styles.qtyBtnText}>+</Text>
-                </TouchableOpacity>
-              </View>
+                  &lt;Text style={styles.qtyBtnText}>+&lt;/Text>
+                &lt;/TouchableOpacity>
+              &lt;/View>
 
-              <View style={styles.orderItemTotalContainer}>
-                <Text style={styles.orderItemTotal}>
+              &lt;View style={styles.orderItemTotalContainer}>
+                &lt;Text style={styles.orderItemTotal}>
                   ${(item.qty * item.price).toFixed(2)}
-                </Text>
-                <TouchableOpacity onPress={() => removeItem(item.id)}>
-                  <Text style={styles.removeText}>X</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
+                &lt;/Text>
+                &lt;TouchableOpacity onPress={() => removeItem(item.id)}>
+                  &lt;Text style={styles.removeText}>X&lt;/Text>
+                &lt;/TouchableOpacity>
+              &lt;/View>
+            &lt;/View>
           ))}
-        </ScrollView>
+        &lt;/ScrollView>
       )}
 
-      <View style={styles.orderTotalRow}>
-        <Text style={styles.orderTotalLabel}>Total:</Text>
-        <Text style={styles.orderTotalValue}>${orderTotal.toFixed(2)}</Text>
-      </View>
+      &lt;View style={styles.orderTotalRow}>
+        &lt;Text style={styles.orderTotalLabel}>Total:&lt;/Text>
+        &lt;Text style={styles.orderTotalValue}>${orderTotal.toFixed(2)}&lt;/Text>
+      &lt;/View>
 
-      <TouchableOpacity
+      &lt;TouchableOpacity
         style={styles.submitOrderBtn}
         onPress={handleSubmitOrder}
       >
-        <Text style={styles.submitOrderText}>Submit Order</Text>
-      </TouchableOpacity>
-    </View>
+        &lt;Text style={styles.submitOrderText}>Submit Order&lt;/Text>
+      &lt;/TouchableOpacity>
+    &lt;/View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" />
+    &lt;SafeAreaView style={styles.container}>
+      &lt;StatusBar barStyle="dark-content" />
 
-      <View
+      &lt;View
         style={[
           styles.statusBar,
           { backgroundColor: isOnline ? COLORS.statusOnline : COLORS.statusOffline },
         ]}
       >
-        <Text style={styles.statusText}>
+        &lt;Text style={styles.statusText}>
           {isOnline ? "● System Online" : "○ System Offline"}
-        </Text>
-      </View>
+        &lt;/Text>
+      &lt;/View>
 
-      <View style={[styles.headerContainer, isTablet && styles.headerContainerTablet]}>
-        <TouchableOpacity
+      &lt;View style={[styles.headerContainer, isTablet &amp;&amp; styles.headerContainerTablet]}>
+        &lt;TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
+          &lt;Text style={styles.backButtonText}>← Back&lt;/Text>
+        &lt;/TouchableOpacity>
 
-        <Image source={BeanSceneLogo} style={styles.logo} resizeMode="contain" />
+        &lt;Image source={BeanSceneLogo} style={styles.logo} resizeMode="contain" />
 
-        <View style={[styles.userProfile, isTablet && styles.userProfileTablet]}>
-          <View style={{ marginRight: 10 }}>
-            <Text style={styles.userNameText}>{username}</Text>
-            <Text style={styles.userRoleText}>{role?.toUpperCase()}</Text>
-          </View>
+        &lt;View style={[styles.userProfile, isTablet &amp;&amp; styles.userProfileTablet]}>
+          &lt;View style={{ marginRight: 10 }}>
+            &lt;Text style={styles.userNameText}>{username}&lt;/Text>
+            &lt;Text style={styles.userRoleText}>{role?.toUpperCase()}&lt;/Text>
+          &lt;/View>
 
-          <TouchableOpacity
+          &lt;TouchableOpacity
             style={styles.logoutBtnSmall}
             onPress={handleLogout}
           >
-            <Text style={styles.logoutTextSmall}>Log Off</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+            &lt;Text style={styles.logoutTextSmall}>Log Off&lt;/Text>
+          &lt;/TouchableOpacity>
+        &lt;/View>
+      &lt;/View>
 
-      <View style={styles.topFormContainer}>
-        <View style={styles.tableInputContainer}>
-          <Text style={styles.label}>Table Number</Text>
-          <TextInput
+      &lt;View style={styles.topFormContainer}>
+        &lt;View style={styles.tableInputContainer}>
+          &lt;Text style={styles.label}>Table Number&lt;/Text>
+          &lt;TextInput
             style={styles.tableInput}
             placeholder="e.g. 12"
             placeholderTextColor={COLORS.textPlaceholder}
@@ -440,11 +468,11 @@ export default function CreateOrderMenuScreen() {
             onChangeText={setTableNumber}
             keyboardType="numeric"
           />
-        </View>
+        &lt;/View>
 
-        <View style={styles.noteInputContainer}>
-          <Text style={styles.label}>Note</Text>
-          <TextInput
+        &lt;View style={styles.noteInputContainer}>
+          &lt;Text style={styles.label}>Note&lt;/Text>
+          &lt;TextInput
             style={styles.noteInput}
             placeholder="Special instructions..."
             placeholderTextColor={COLORS.textPlaceholder}
@@ -452,21 +480,21 @@ export default function CreateOrderMenuScreen() {
             onChangeText={setNote}
             multiline
           />
-        </View>
-      </View>
+        &lt;/View>
+      &lt;/View>
 
       {isTablet ? (
-        <View style={styles.tabletMainRow}>
+        &lt;View style={styles.tabletMainRow}>
           {renderOrderSummary()}
           {renderMenuList()}
-        </View>
+        &lt;/View>
       ) : (
-        <ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
+        &lt;ScrollView style={styles.mainContent} showsVerticalScrollIndicator={false}>
           {renderOrderSummary()}
           {renderMenuList()}
-        </ScrollView>
+        &lt;/ScrollView>
       )}
-    </SafeAreaView>
+    &lt;/SafeAreaView>
   );
 }
 
@@ -752,3 +780,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#loadAll">loadAll</a></li><li><a href="global.html#loadMenuOnline">loadMenuOnline</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Mon Jun 15 2026 09:57:22 GMT+1000 (Australian Eastern Standard Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

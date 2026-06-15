@@ -4,7 +4,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   TextInput,
   FlatList,
@@ -13,6 +12,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import BeanSceneLogo from '../images/BeanSceneLogo.jpg';
 import { API_BASE } from '../constants/apibase';
@@ -54,7 +54,7 @@ export default function KitchenOrdersScreen({ route, navigation }) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
-      signal: controller.signal, // hook AbortController into fetch
+      signal: controller?.signal, // hook AbortController into fetch
     });
 
     const data = await response.json();
@@ -91,7 +91,6 @@ export default function KitchenOrdersScreen({ route, navigation }) {
   }
 };
 
-
   useEffect(() => {
     const controller = new AbortController();
 
@@ -119,7 +118,7 @@ export default function KitchenOrdersScreen({ route, navigation }) {
           body: JSON.stringify({ status: newStatus }),
         }
       );
-
+      Alert.alert('Success', `Order ${orderId} marked as ${newStatus}}`)
       const data = await response.json();
 
       if (!response.ok) {

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import {
-  SafeAreaView,
   StatusBar,
   View,
   Text,
@@ -12,6 +11,7 @@ import {
   TextInput,
 } from "react-native";
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import * as SecureStore from "expo-secure-store";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Picker } from "@react-native-picker/picker";

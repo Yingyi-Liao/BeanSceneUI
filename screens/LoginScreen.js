@@ -11,6 +11,7 @@ import {
   useWindowDimensions
 } from "react-native";
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import BeanSceneLogo from "../images/BeanSceneLogo.jpg";
 import { COLORS } from "../constants/colors";
 import { useNavigation } from "@react-navigation/native";
@@ -21,7 +22,7 @@ export default function LoginScreen() {
   const navigation = useNavigation();
   const { width, height } = useWindowDimensions();
 
-  // ⭐ Tablet layout only when device is large AND landscape
+  //  Tablet layout only when device is large AND landscape
   const isTablet = width >= 600;
   const isLandscape = width > height;
   const useTabletLayout = isTablet;
@@ -83,6 +84,7 @@ export default function LoginScreen() {
   };
 
   return (
+    <SafeAreaView>
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -144,6 +146,7 @@ export default function LoginScreen() {
         </View>
       </View>
     </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   ScrollView,
   StatusBar,
@@ -13,6 +12,7 @@ import {
   TextInput,
 } from "react-native";
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import * as SecureStore from "expo-secure-store";
 import { useFocusEffect } from "@react-navigation/native";
 import { Picker } from "@react-native-picker/picker";

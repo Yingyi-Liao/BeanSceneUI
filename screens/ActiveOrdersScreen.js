@@ -4,7 +4,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   TextInput,
   FlatList,
@@ -13,6 +12,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import BeanSceneLogo from '../images/BeanSceneLogo.jpg';
 import { API_BASE } from '../constants/apibase';

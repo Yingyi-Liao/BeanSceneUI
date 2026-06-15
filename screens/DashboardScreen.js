@@ -4,12 +4,12 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   useWindowDimensions,
   StatusBar
 } from "react-native";
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import BeanSceneLogo from "../images/BeanSceneLogo.jpg";
 import { COLORS } from "../constants/colors";
 import * as SecureStore from "expo-secure-store";

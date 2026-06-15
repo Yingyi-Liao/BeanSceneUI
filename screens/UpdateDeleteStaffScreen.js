@@ -4,7 +4,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   TextInput,
   Alert,
@@ -13,6 +12,7 @@ import {
   useWindowDimensions,
 } from "react-native";
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import { Picker } from "@react-native-picker/picker";
 import * as SecureStore from "expo-secure-store";
 

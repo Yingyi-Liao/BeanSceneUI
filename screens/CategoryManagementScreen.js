@@ -4,7 +4,6 @@ import {
   View,
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   Image,
   TextInput,
   StatusBar,
@@ -13,6 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
+import {SafeAreaView} from 'react-native-safe-area-context';
 import BeanSceneLogo from '../images/BeanSceneLogo.jpg';
 import { API_BASE } from '../constants/apibase';
 import { COLORS } from '../constants/colors';
