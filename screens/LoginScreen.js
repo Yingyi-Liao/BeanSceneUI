@@ -11,7 +11,6 @@ import {
   useWindowDimensions
 } from "react-native";
 
-import {SafeAreaView} from 'react-native-safe-area-context';
 import BeanSceneLogo from "../images/BeanSceneLogo.jpg";
 import { COLORS } from "../constants/colors";
 import { useNavigation } from "@react-navigation/native";
@@ -84,69 +83,67 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView>
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-    >
-      <View style={[styles.loginContainer, useTabletLayout && styles.loginTablet]}>
-        
-        {/* Brand Section */}
-        <View style={styles.brandSection}>
-          <View style={styles.brandLogoWrapper}>
-            <Image
-              source={BeanSceneLogo}
-              style={isTablet ? styles.largeLogoTablet : styles.largeLogoMobile}
-              resizeMode="contain"
-            />
-          </View>
-          <View style={styles.appNameContainer}>
-            <Text style={styles.appNameText}>Bean Scene</Text>
-            <Text style={styles.appSubName}>Ordering System</Text>
-          </View>
-        </View>
-
-        {/* Form Section */}
-        <View style={styles.formSection}>
-          <Text style={styles.screenTitle}>Login</Text>
-
-          {errorMessage !== "" && (
-            <View style={styles.errorBox}>
-              <Text style={styles.errorText}>{errorMessage}</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <View style={[styles.loginContainer, useTabletLayout && styles.loginTablet]}>
+          
+          {/* Brand Section */}
+          <View style={styles.brandSection}>
+            <View style={styles.brandLogoWrapper}>
+              <Image
+                source={BeanSceneLogo}
+                style={isTablet ? styles.largeLogoTablet : styles.largeLogoMobile}
+                resizeMode="contain"
+              />
             </View>
-          )}
+            <View style={styles.appNameContainer}>
+              <Text style={styles.appNameText}>Bean Scene</Text>
+              <Text style={styles.appSubName}>Ordering System</Text>
+            </View>
+          </View>
 
-          <Text style={styles.inputLabel}>Username</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholder="Enter username"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-          />
+          {/* Form Section */}
+          <View style={styles.formSection}>
+            <Text style={styles.screenTitle}>Login</Text>
 
-          <Text style={styles.inputLabel}>Password</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholder="Enter password"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry={true}
-          />
+            {errorMessage !== "" && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            )}
 
-          <TouchableOpacity
-            style={styles.loginBtn}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            <Text style={styles.btnText}>
-              {loading ? "Loading..." : "Login"}
-            </Text>
-          </TouchableOpacity>
+            <Text style={styles.inputLabel}>Username</Text>
+            <TextInput
+              style={styles.inputField}
+              placeholder="Enter username"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+            />
+
+            <Text style={styles.inputLabel}>Password</Text>
+            <TextInput
+              style={styles.inputField}
+              placeholder="Enter password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={true}
+            />
+
+            <TouchableOpacity
+              style={styles.loginBtn}
+              onPress={handleLogin}
+              disabled={loading}
+            >
+              <Text style={styles.btnText}>
+                {loading ? "Loading..." : "Login"}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
-    </SafeAreaView>
+      </KeyboardAvoidingView>
   );
 }
 

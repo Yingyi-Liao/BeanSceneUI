@@ -90,7 +90,7 @@ export default function DashboardScreen() {
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: COLORS.white }}>
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: COLORS.white }}>
       <StatusBar barStyle="dark-content" />
 
       <SystemStatusBar isOnline={true} />
